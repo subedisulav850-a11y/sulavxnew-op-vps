@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SULAV VPS</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#050505;color:#00ff41;font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden;}
+canvas#matrix{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+.screen{position:relative;z-index:10;min-height:100vh;}
+.orb{font-family:'Orbitron',sans-serif;}
+.green{color:#00ff41;}
+.pink{color:#ff00ff;}
+.red{color:#ff0000;}
+.yellow{color:#ffff00;}
+.cyan{color:#00ffff;}
+.glow{text-shadow:0 0 8px currentColor;}
+.card{background:rgba(10,10,10,.92);border:1px solid rgba(0,255,65,.2);border-radius:8px;padding:16px;transition:border-color .3s,box-shadow .3s;}
+.card:hover{border-color:rgba(0,255,65,.5);box-shadow:0 0 20px rgba(0,255,65,.1);}
+.btn{background:transparent;border:1px solid rgba(0,255,65,.4);color:#00ff41;font-family:'Share Tech Mono',monospace;padding:8px 16px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:all .2s;border-radius:4px;}
+.btn:hover{background:rgba(0,255,65,.1);border-color:#00ff41;box-shadow:0 0 12px rgba(0,255,65,.3);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-red{border-color:rgba(255,0,0,.4);color:#ff0000;}
+.btn-red:hover{background:rgba(255,0,0,.1);border-color:#ff0000;box-shadow:0 0 12px rgba(255,0,0,.3);}
+.btn-pink{border-color:rgba(255,0,255,.4);color:#ff00ff;}
+.btn-pink:hover{background:rgba(255,0,255,.1);border-color:#ff00ff;box-shadow:0 0 12px rgba(255,0,255,.3);}
+.btn-cyan{border-color:rgba(0,255,255,.4);color:#00ffff;}
+.btn-cyan:hover{background:rgba(0,255,255,.1);border-color:#00ffff;}
+.btn-yellow{border-color:rgba(255,255,0,.4);color:#ffff00;}
+.btn-yellow:hover{background:rgba(255,255,0,.1);border-color:#ffff00;}
+.btn-full{width:100%;}
+.inp{background:rgba(0,255,65,.05);border:1px solid rgba(0,255,65,.3);color:#00ff41;font-family:'Share Tech Mono',monospace;padding:10px 14px;width:100%;border-radius:4px;outline:none;transition:all .2s;}
+.inp:focus{border-color:#00ff41;box-shadow:0 0 10px rgba(0,255,65,.25);}
+.inp::placeholder{color:rgba(0,255,65,.3);}
+.inp-red{border-color:rgba(255,0,0,.3);color:#ff0000;}
+.inp-red:focus{border-color:#ff0000;}
+.inp-red::placeholder{color:rgba(255,0,0,.3);}
+.tag-run{color:#00ff41;border:1px solid #00ff41;padding:2px 10px;font-size:11px;}
+.tag-stop{color:#ff0000;border:1px solid #ff0000;padding:2px 10px;font-size:11px;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(0,255,65,.2);background:rgba(5,5,5,.95);position:sticky;top:0;z-index:20;}
+.flex{display:flex;}.gap2{gap:8px;}.gap3{gap:12px;}.gap4{gap:16px;}
+.items-center{align-items:center;}.justify-between{justify-content:space-between;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.p4{padding:16px;}.mb3{margin-bottom:12px;}.mb4{margin-bottom:16px;}.mt2{margin-top:8px;}.mt4{margin-top:16px;}
+.text-xs{font-size:11px;}.text-sm{font-size:13px;}.text-lg{font-size:18px;}.text-xl{font-size:22px;}.text-2xl{font-size:28px;}.text-3xl{font-size:36px;}
+.center{text-align:center;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:rgba(10,10,10,.98);border:1px solid rgba(0,255,65,.3);border-radius:8px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;}
+.modal-red{border-color:rgba(255,0,0,.4);}
+.sidebar{position:fixed;inset:0;z-index:40;display:flex;}
+.sidebar-inner{width:280px;height:100%;background:rgba(5,5,5,.98);border-right:1px solid rgba(0,255,65,.2);overflow-y:auto;}
+.sidebar-backdrop{flex:1;cursor:pointer;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-radius:4px;transition:background .2s;width:100%;text-align:left;background:transparent;border:none;color:rgba(0,255,65,.7);font-family:'Share Tech Mono',monospace;font-size:13px;}
+.nav-item:hover{background:rgba(0,255,65,.08);}
+.tabs{display:flex;border-bottom:1px solid rgba(0,255,65,.15);}
+.tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-size:12px;text-transform:uppercase;color:rgba(0,255,65,.4);border-bottom:2px solid transparent;transition:all .2s;background:transparent;border-left:none;border-right:none;border-top:none;font-family:'Share Tech Mono',monospace;}
+.tab.active{color:#00ff41;border-bottom-color:#00ff41;}
+.tab-red.active{color:#ff0000;border-bottom-color:#ff0000;}
+.progress-bar{height:6px;background:rgba(0,255,65,.1);border:1px solid rgba(0,255,65,.2);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#00ff41,#00cc33);box-shadow:0 0 8px rgba(0,255,65,.5);transition:width .4s;}
+.msg-user{background:rgba(0,255,65,.08);border:1px solid rgba(0,255,65,.25);color:#00ff41;padding:10px;border-radius:6px;max-width:80%;align-self:flex-end;}
+.msg-bot{background:rgba(0,255,255,.05);border:1px solid rgba(0,255,255,.2);color:#00ffff;padding:10px;border-radius:6px;max-width:80%;align-self:flex-start;white-space:pre-wrap;}
+.chat-area{display:flex;flex-direction:column;gap:10px;padding:16px;overflow-y:auto;flex:1;}
+.broadcast{background:rgba(255,255,0,.05);border:1px solid rgba(255,255,0,.3);color:#ffff00;padding:10px;text-align:center;font-size:13px;margin:12px 16px 0;}
+pre.log{background:rgba(0,0,0,.6);color:rgba(0,255,65,.7);padding:12px;border-radius:4px;font-size:11px;max-height:320px;overflow-y:auto;white-space:pre-wrap;font-family:'Share Tech Mono',monospace;}
+.space2>*+*{margin-top:8px;}.space3>*+*{margin-top:12px;}.space4>*+*{margin-top:16px;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:#050505;}::-webkit-scrollbar-thumb{background:rgba(0,255,65,.3);border-radius:3px;}
+select.inp{cursor:pointer;}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<div id="app"></div>
+
+<script>
+// ===== MATRIX BACKGROUND =====
+(function(){
+  const c=document.getElementById('matrix'),ctx=c.getContext('2d');
+  const chars='アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789ABCDEF';
+  let cols,drops;
+  function init(){c.width=innerWidth;c.height=innerHeight;cols=Math.floor(innerWidth/16);drops=Array(cols).fill(1);}
+  function draw(){ctx.fillStyle='rgba(5,5,5,.05)';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='rgba(0,255,65,.1)';ctx.font='14px Share Tech Mono,monospace';for(let i=0;i<drops.length;i++){ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,drops[i]*16);if(drops[i]*16>c.height&&Math.random()>.975)drops[i]=0;drops[i]++;}}
+  init();setInterval(draw,50);addEventListener('resize',init);
+})();
+
+// ===== STATE =====
+let state={screen:'verify',user:null,siteSettings:{primaryColor:'#00ff41',siteName:'SULAV VPS',loginTitle:'Sulav Gaming'},broadcast:null};
+
+// ===== API =====
+async function api(path,opts={}){
+  const res=await fetch('/api'+path,{...opts,headers:{'Content-Type':'application/json',...opts.headers},credentials:'include'});
+  return res.json();
+}
+async function apiForm(path,form){
+  const res=await fetch('/api'+path,{method:'POST',body:form,credentials:'include'});
+  return res.json();
+}
+
+// ===== RENDER ENGINE =====
+const app=document.getElementById('app');
+function render(){
+  const s=state.screen;
+  if(s==='verify')renderVerify();
+  else if(s==='login')renderLogin();
+  else if(s==='dashboard')renderDashboard();
+  else if(s==='project')renderProject();
+  else if(s==='packages')renderPackages();
+  else if(s==='terminal')renderTerminal();
+  else if(s==='credits')renderCredits();
+  else if(s==='admin')renderAdmin();
+  else if(s==='help')renderHelp();
+}
+function go(screen,data={}){state.screen=screen;Object.assign(state,data);render();}
+
+// ===== VERIFY PAGE =====
+function renderVerify(){
+  app.innerHTML=`
+  <div class="screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <div class="card" style="width:100%;max-width:380px;margin:16px;text-align:center;">
+      <div style="width:64px;height:64px;border:2px solid #00ff41;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 0 20px rgba(0,255,65,.4);">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#00ff41" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="orb text-xl green glow mb3">SECURITY CHECK</div>
+      <div class="text-xs mb4" style="color:rgba(0,255,65,.5)">VERIFYING YOU ARE HUMAN</div>
+      <div class="progress-bar mb3"><div class="progress-fill" id="vbar" style="width:0%"></div></div>
+      <div class="text-xs green" id="vstatus">Initializing security scan...</div>
+      <div id="vbtn" style="margin-top:16px;display:none;">
+        <div class="flex items-center gap2" style="justify-content:center;color:#00ff41;margin-bottom:12px;font-size:13px;">
+          <span>&#10003;</span> Verification Passed
+        </div>
+        <button class="btn btn-full" onclick="loadAndGo()">CONTINUE TO LOGIN</button>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(0,255,65,.15);font-size:10px;color:rgba(0,255,65,.3);">SULAV SECURE SYSTEMS v3.0</div>
+    </div>
+  </div>`;
+  const msgs=['Initializing security scan...','Checking browser integrity...','Verifying connection...','Analyzing headers...','Validating human presence...','Security check complete.'];
+  let step=0;
+  const iv=setInterval(()=>{
+    step++;
+    document.getElementById('vbar').style.width=(step*20)+'%';
+    document.getElementById('vstatus').textContent=msgs[Math.min(step,msgs.length-1)];
+    if(step>=5){clearInterval(iv);document.getElementById('vbtn').style.display='block';}
+  },600);
+}
+
+async function loadAndGo(){
+  try{
+    const [me,bc,ss]=await Promise.all([api('/auth/me'),api('/admin/broadcast'),api('/admin/site-settings')]);
+    state.broadcast=bc;
+    if(ss&&ss.siteName)state.siteSettings=ss;
+    if(me&&me.id){state.user=me;go('dashboard');}else{go('login');}
+  }catch{go('login');}
+}
+
+// ===== LOGIN PAGE =====
+let loginMode='login';
+function renderLogin(){
+  const t=loginMode==='login';
+  app.innerHTML=`
+  <div class="screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <div class="card" style="width:100%;max-width:340px;margin:16px;">
+      <div class="center mb4">
+        <div style="font-size:48px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 20px rgba(0,255,65,.5));">💀</div>
+        <div class="orb text-xl green glow">${state.siteSettings.loginTitle||'SULAV GAMING'}</div>
+        <div class="text-xs mt2" style="color:rgba(0,255,65,.5);letter-spacing:.15em;">SECURE TERMINAL v3.0</div>
+      </div>
+      <div class="green text-sm mb3">$> ${t?'LOGIN_REQUIRED':'REGISTER_NEW_USER'}<span style="animation:blink 1s step-end infinite;display:inline-block">_</span></div>
+      <div id="lerr" style="display:none;border:1px solid rgba(255,0,0,.4);background:rgba(255,0,0,.05);color:#ff0000;padding:10px;text-align:center;font-size:12px;border-radius:4px;margin-bottom:12px;"></div>
+      <div class="space3">
+        <input class="inp" id="luser" placeholder="Username" type="text">
+        <div style="position:relative;">
+          <input class="inp" id="lpass" placeholder="Password" type="password" style="padding-right:40px;">
+          <button onclick="togglePass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#00ffff;cursor:pointer;font-size:16px;" id="eyebtn">◎</button>
+        </div>
+        ${!t?'<input class="inp" id="lref" placeholder="Referral Code (optional)" type="text">':''}
+        <button class="btn btn-full" onclick="doLogin()" style="padding:12px;">
+          >_ ${t?'AUTHENTICATE':'REGISTER'}
+        </button>
+      </div>
+      <div class="center mt4 text-xs">
+        <button onclick="loginMode=loginMode==='login'?'register':'login';render();" style="background:none;border:none;color:#00ffff;cursor:pointer;font-family:'Share Tech Mono',monospace;">
+          ${t?'New user? Register here':'Already registered? Login'}
+        </button>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(0,255,65,.15);text-align:center;">
+        <div class="text-xs yellow">⚠ UNAUTHORIZED ACCESS PROHIBITED</div>
+        <div class="text-xs mt2" style="color:rgba(0,255,65,.3);">SULAV SECURE SYSTEMS</div>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('luser').addEventListener('keydown',e=>e.key==='Enter'&&doLogin());
+  document.getElementById('lpass').addEventListener('keydown',e=>e.key==='Enter'&&doLogin());
+}
+function togglePass(){const i=document.getElementById('lpass'),b=document.getElementById('eyebtn');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'◎':'◉';}
+async function doLogin(){
+  const u=document.getElementById('luser').value.trim();
+  const p=document.getElementById('lpass').value;
+  const ref=document.getElementById('lref')?document.getElementById('lref').value:'';
+  const err=document.getElementById('lerr');
+  if(!u||!p){err.style.display='block';err.textContent='All fields required';return;}
+  err.style.display='none';
+  try{
+    const r=loginMode==='login'?await api('/auth/login',{method:'POST',body:JSON.stringify({username:u,password:p})}):await api('/auth/register',{method:'POST',body:JSON.stringify({username:u,password:p,referralCode:ref})});
+    if(r.success){state.user=r.user;const bc=await api('/admin/broadcast');state.broadcast=bc;go('dashboard');}
+    else{err.style.display='block';err.textContent=r.message||'Failed';}
+  }catch{err.style.display='none';}
+}
+<style>@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}</style>
+
+// ===== DASHBOARD =====
+let projects=[],stats={};
+async function loadDashboard(){
+  [projects,stats]=await Promise.all([api('/projects'),api('/dashboard/stats')]);
+  render();
+}
+function renderDashboard(){
+  const bc=state.broadcast;
+  app.innerHTML=`
+  <div class="screen">
+    <div class="hdr">
+      <div class="flex items-center gap3">
+        <button onclick="toggleSidebar()" style="background:none;border:none;color:#00ff41;font-size:22px;cursor:pointer;">☰</button>
+        <div class="flex items-center gap2">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#00ff41"><rect x="2" y="3" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="18" y2="8" stroke="#050505" stroke-width="1.5"/><line x1="6" y1="12" x2="14" y2="12" stroke="#050505" stroke-width="1.5"/></svg>
+          <span class="orb green" style="font-weight:700;letter-spacing:.1em;">${state.siteSettings.dashboardTitle||'SULAV VPS'}</span>
+        </div>
+      </div>
+      <div class="text-xs" style="color:rgba(0,255,65,.6);">CPU:${stats.cpuUsage||0}% | RAM:${stats.ramUsage||0}%</div>
+    </div>
+    ${bc&&bc.active&&bc.message?`<div class="broadcast">📢 ${bc.message}</div>`:''}
+    <div class="p4 grid2">
+      <div class="card center"><div class="text-3xl green">${stats.runningProjects||0}</div><div class="text-xs mt2" style="color:rgba(0,255,65,.5);">RUNNING</div></div>
+      <div class="card center"><div class="text-3xl green">${stats.totalProjects||0}</div><div class="text-xs mt2" style="color:rgba(0,255,65,.5);">TOTAL</div></div>
+    </div>
+    <div class="p4 space3" id="plist">
+      ${projects.length===0?`<div class="card center" style="color:rgba(0,255,65,.3);padding:32px;">No projects yet. Click + to create one.</div>`:''}
+      ${projects.map(p=>projectCard(p)).join('')}
+    </div>
+    <button onclick="showCreateModal()" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:#00ff41;color:#050505;border:none;font-size:28px;cursor:pointer;box-shadow:0 0 20px rgba(0,255,65,.5);z-index:20;">+</button>
+  </div>
+  <div id="sidebar" style="display:none;" class="sidebar">
+    <div class="sidebar-inner">
+      <div class="hdr"><span class="orb green">MENU</span><button onclick="closeSidebar()" style="background:none;border:none;color:#00ff41;font-size:22px;cursor:pointer;">×</button></div>
+      ${navItem('📊','Dashboard','dashboard')}
+      ${navItem('📦','Package Installer','packages')}
+      ${navItem('>_','Terminal','terminal')}
+      ${navItem('💰','Credits & Coupons','credits')}
+      ${navItem('🔴','Admin Panel','admin')}
+      ${navItem('❓','Help & Support','help')}
+      <hr style="border-color:rgba(0,255,65,.15);margin:8px 0;">
+      <div style="padding:12px 16px;font-size:11px;color:rgba(0,255,65,.4);">
+        <div>User: ${state.user.username}</div>
+        <div>Credits: ${state.user.credits}</div>
+        <div>Ref: ${state.user.referralCode}</div>
+      </div>
+      <button onclick="doLogout()" class="nav-item" style="color:#ff0000;">⏻ Logout</button>
+    </div>
+    <div class="sidebar-backdrop" onclick="closeSidebar()"></div>
+  </div>
+  <div id="create-modal" style="display:none;" class="overlay">
+    <div class="modal">
+      <div class="green orb mb3">NEW PROJECT</div>
+      <div class="space3">
+        <input class="inp" id="pname" placeholder="Project Name">
+        <div id="filedrop" onclick="document.getElementById('pfile').click()" class="inp" style="cursor:pointer;text-align:center;padding:24px;border-style:dashed;">Click to select .zip or .py file</div>
+        <input type="file" id="pfile" style="display:none;" accept=".zip,.py" onchange="updateFileDrop()">
+        <div class="flex gap2">
+          <button class="btn btn-full" onclick="doCreate()">UPLOAD</button>
+          <button class="btn btn-red btn-full" onclick="closeCreate()">CANCEL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="settings-modal" style="display:none;" class="overlay">
+    <div class="modal">
+      <div class="green orb mb3">PROJECT SETTINGS</div>
+      <div class="space3">
+        <div><div class="text-xs mb3" style="color:rgba(0,255,65,.5);">Project Name</div><input class="inp" id="sname" placeholder="Name"></div>
+        <div><div class="text-xs mb3" style="color:rgba(0,255,65,.5);">Main File</div><input class="inp" id="smain" placeholder="main.py"></div>
+        <div class="flex gap2">
+          <button class="btn btn-full" onclick="saveSettings()">SAVE</button>
+          <button class="btn btn-red btn-full" onclick="document.getElementById('settings-modal').style.display='none'">CANCEL</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  loadDashboard();
+}
+function projectCard(p){
+  const run=p.status==='running';
+  return `<div class="card">
+    <div class="flex justify-between items-center mb3">
+      <div><div class="orb green" style="font-size:15px;font-weight:700;">${p.name.toUpperCase()}</div><div class="text-xs" style="color:rgba(0,255,65,.4);">python ${p.mainFile}</div></div>
+      <span class="${run?'tag-run':'tag-stop'}">${p.status.toUpperCase()}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+      ${run?`<button class="btn btn-red" onclick="projAction('${p.id}','stop')" style="padding:8px;">■</button>`:`<button class="btn" onclick="projAction('${p.id}','start')" style="padding:8px;">▶</button>`}
+      <button class="btn btn-cyan" onclick="projAction('${p.id}','restart')" style="padding:8px;">↺</button>
+      <button class="btn btn-cyan" onclick="go('project',{projId:'${p.id}',projName:'${p.name}'})" style="padding:8px;">👁</button>
+      <button class="btn btn-pink" onclick="openSettings('${p.id}','${p.name}','${p.mainFile}')" style="padding:8px;">⚙</button>
+    </div>
+    ${!run?`<button class="btn btn-red btn-full" onclick="projAction('${p.id}','delete')" style="margin-top:8px;padding:8px;font-size:11px;">🗑 DELETE PROJECT</button>`:''}
+  </div>`;
+}
+function navItem(icon,label,screen){return `<button onclick="go('${screen}');closeSidebar();" class="nav-item"><span>${icon}</span><span>${label}</span></button>`;}
+function toggleSidebar(){document.getElementById('sidebar').style.display='flex';}
+function closeSidebar(){document.getElementById('sidebar').style.display='none';}
+function showCreateModal(){document.getElementById('create-modal').style.display='flex';}
+function closeCreate(){document.getElementById('create-modal').style.display='none';}
+function updateFileDrop(){const f=document.getElementById('pfile').files[0];if(f)document.getElementById('filedrop').textContent=f.name;}
+async function doCreate(){
+  const name=document.getElementById('pname').value.trim();
+  const file=document.getElementById('pfile').files[0];
+  if(!name||!file){alert('Name and file required');return;}
+  const fd=new FormData();fd.append('name',name);fd.append('file',file);
+  const r=await apiForm('/projects',fd);
+  if(r.id){closeCreate();await loadDashboard();}
+  else alert(r.message||'Failed');
+}
+async function projAction(id,action){
+  if(action==='delete'&&!confirm('Delete this project permanently?'))return;
+  const ep=action==='delete'?`/projects/${id}`:`/projects/${id}/${action}`;
+  const method=action==='delete'?'DELETE':'POST';
+  await api(ep,{method});
+  await loadDashboard();
+}
+let settingsId='';
+function openSettings(id,name,mf){settingsId=id;document.getElementById('sname').value=name;document.getElementById('smain').value=mf;document.getElementById('settings-modal').style.display='flex';}
+async function saveSettings(){
+  const n=document.getElementById('sname').value;const mf=document.getElementById('smain').value;
+  await api(`/projects/${settingsId}/settings`,{method:'PUT',body:JSON.stringify({name:n,mainFile:mf})});
+  document.getElementById('settings-modal').style.display='none';
+  await loadDashboard();
+}
+async function doLogout(){await api('/auth/logout',{method:'POST'});state.user=null;go('login');}
+
+// ===== PROJECT VIEW =====
+let projFiles=[],projLogs='',projTab='files',editFile=null,editContent='';
+async function loadProject(){
+  [projFiles,projLogs]=await Promise.all([api(`/projects/${state.projId}/files`),api(`/projects/${state.projId}/logs`)]);
+  render();
+}
+function renderProject(){
+  app.innerHTML=`
+  <div class="screen">
+    <div class="hdr">
+      <button onclick="go('dashboard')" style="background:none;border:none;color:#00ff41;font-size:20px;cursor:pointer;">←</button>
+      <span class="orb green" style="font-size:15px;flex:1;margin-left:12px;">${(state.projName||'PROJECT').toUpperCase()}</span>
+    </div>
+    <div class="tabs">
+      <button class="tab ${projTab==='files'?'active':''}" onclick="projTab='files';editFile=null;render()">FILES</button>
+      <button class="tab ${projTab==='logs'?'active':''}" onclick="projTab='logs';render()">LOGS</button>
+      <button class="tab ${projTab==='upload'?'active':''}" onclick="projTab='upload';render()">UPLOAD</button>
+    </div>
+    <div class="p4">
+      ${projTab==='files'&&!editFile?renderFileList():''}
+      ${projTab==='files'&&editFile?renderFileEditor():''}
+      ${projTab==='logs'?renderLogs():''}
+      ${projTab==='upload'?renderUpload():''}
+    </div>
+  </div>`;
+  if(projFiles.length===0&&projTab==='files')loadProject();
+}
+function renderFileList(){
+  const f=projFiles.filter(f=>f.type==='file');
+  if(f.length===0)return `<div class="card center" style="padding:32px;color:rgba(0,255,65,.3);">No files</div>`;
+  return `<div class="space2">${f.map(fi=>`<div class="card flex justify-between items-center">
+    <div><div class="green text-sm">${fi.name}</div><div class="text-xs" style="color:rgba(0,255,65,.3);">${(fi.size/1024).toFixed(1)} KB</div></div>
+    <div class="flex gap2">
+      <button class="btn btn-cyan" style="padding:6px 10px;font-size:11px;" onclick="viewFile('${fi.path}')">EDIT</button>
+      <button class="btn btn-red" style="padding:6px 10px;font-size:11px;" onclick="delFile('${fi.path}')">DEL</button>
+    </div>
+  </div>`).join('')}</div>`;
+}
+function renderFileEditor(){
+  return `<div class="space3">
+    <div class="flex justify-between items-center"><span class="green text-sm">${editFile}</span><button onclick="editFile=null;render();" style="background:none;border:none;color:#00ff41;font-size:18px;cursor:pointer;">×</button></div>
+    <textarea id="fedit" style="background:rgba(0,0,0,.6);border:1px solid rgba(0,255,65,.25);color:rgba(0,255,65,.8);font-family:'Share Tech Mono',monospace;font-size:12px;width:100%;height:320px;resize:vertical;padding:12px;border-radius:4px;line-height:1.5;">${editContent}</textarea>
+    <div class="flex gap2">
+      <button class="btn btn-full" onclick="saveFile()">SAVE</button>
+      <button class="btn btn-red btn-full" onclick="editFile=null;render();">CANCEL</button>
+    </div>
+  </div>`;
+}
+function renderLogs(){
+  return `<div class="card"><div class="flex justify-between items-center mb3"><span class="green text-sm">LIVE LOGS</span><button class="btn" style="padding:6px 12px;font-size:11px;" onclick="refreshLogs()">REFRESH</button></div><pre class="log">${projLogs||'No logs'}</pre></div>`;
+}
+function renderUpload(){
+  return `<div class="card space3"><div class="green mb3">UPLOAD FILE</div><div id="uparea" class="inp" style="cursor:pointer;text-align:center;padding:32px;border-style:dashed;" onclick="document.getElementById('upfile').click()">Click to select file</div><input type="file" id="upfile" style="display:none;" onchange="document.getElementById('uparea').textContent=this.files[0]?this.files[0].name:'Select file'"><button class="btn btn-full" style="margin-top:8px;" onclick="doUpload()">UPLOAD</button></div>`;
+}
+async function viewFile(fp){editFile=fp;const d=await api(`/projects/${state.projId}/files/${fp}`);editContent=d.content||'';render();}
+async function saveFile(){const c=document.getElementById('fedit').value;await api(`/projects/${state.projId}/files/${editFile}`,{method:'PUT',body:JSON.stringify({content:c})});editFile=null;render();}
+async function delFile(fp){if(!confirm('Delete '+fp+'?'))return;await api(`/projects/${state.projId}/files/${fp}`,{method:'DELETE'});await loadProject();}
+async function refreshLogs(){const d=await api(`/projects/${state.projId}/logs`);projLogs=d.logs;document.querySelector('pre.log').textContent=projLogs;}
+async function doUpload(){const f=document.getElementById('upfile').files[0];if(!f)return;const fd=new FormData();fd.append('file',f);const res=await fetch(`/api/projects/${state.projId}/upload`,{method:'POST',body:fd,credentials:'include'});await res.json();projTab='files';await loadProject();}
+
+// ===== PACKAGES =====
+let pkgs=[];
+async function loadPkgs(){pkgs=await api('/packages/list');render();}
+function renderPackages(){
+  app.innerHTML=`
+  <div class="screen">
+    <div class="hdr"><button onclick="go('dashboard')" style="background:none;border:none;color:#00ff41;font-size:20px;cursor:pointer;">←</button><span class="orb cyan" style="font-size:15px;margin-left:12px;">PACKAGE INSTALLER</span></div>
+    <div class="p4 space4">
+      <div class="card space3">
+        <div class="flex gap2">
+          <input class="inp" id="pkgname" placeholder="Package name (e.g. flask)" style="flex:1;">
+          <button class="btn" onclick="installPkg()">INSTALL</button>
+        </div>
+        <pre class="log" id="pkgout" style="min-height:60px;display:none;"></pre>
+      </div>
+      <div>
+        <div class="green text-sm mb3">INSTALLED PACKAGES (${pkgs.length})</div>
+        <div class="space2">${pkgs.slice(0,60).map(p=>`<div class="card flex justify-between items-center" style="padding:10px 14px;">
+          <div><span class="green">${p.name}</span><span class="text-xs" style="color:rgba(0,255,65,.3);margin-left:8px;">v${p.version}</span></div>
+          <button class="btn btn-red" style="padding:4px 10px;font-size:11px;" onclick="removePkg('${p.name}')">REMOVE</button>
+        </div>`).join('')}</div>
+      </div>
+    </div>
+  </div>`;
+  if(pkgs.length===0)loadPkgs();
+}
+async function installPkg(){const n=document.getElementById('pkgname').value.trim();if(!n)return;const o=document.getElementById('pkgout');o.style.display='block';o.textContent='Installing '+n+'...';;const r=await api('/packages/install',{method:'POST',body:JSON.stringify({packageName:n})});o.textContent=r.output||r.message;if(r.success){document.getElementById('pkgname').value='';await loadPkgs();}}
+async function removePkg(n){const r=await api('/packages/uninstall',{method:'POST',body:JSON.stringify({packageName:n})});await loadPkgs();}
+
+// ===== TERMINAL =====
+let termHistory=[];
+function renderTerminal(){
+  app.innerHTML=`
+  <div class="screen" style="display:flex;flex-direction:column;height:100vh;">
+    <div class="hdr"><button onclick="go('dashboard')" style="background:none;border:none;color:#00ff41;font-size:20px;cursor:pointer;">←</button><span class="orb yellow" style="font-size:15px;margin-left:12px;">TERMINAL</span></div>
+    <div id="tarea" style="flex:1;overflow-y:auto;padding:16px;font-size:12px;line-height:1.6;">
+      <div class="green">SULAV VPS Terminal v3.0 - Type commands below</div>
+      <div class="green" style="margin-bottom:12px;">Tip: install python packages with pip3 install &lt;pkg&gt;</div>
+      ${termHistory.map((e,i)=>`<div><div><span class="green">$</span> <span class="cyan">${e.cmd}</span></div><pre style="color:${e.code===0?'rgba(0,255,65,.7)':'rgba(255,0,0,.7)'};white-space:pre-wrap;margin:4px 0 8px;">${e.out}</pre></div>`).join('')}
+    </div>
+    <div class="flex gap2 p4" style="border-top:1px solid rgba(0,255,65,.2);">
+      <span class="green" style="align-self:center;">$</span>
+      <input class="inp" id="tcmd" placeholder="Enter command..." style="flex:1;" autocomplete="off">
+      <button class="btn" onclick="runCmd()">RUN</button>
+    </div>
+  </div>`;
+  const inp=document.getElementById('tcmd');
+  inp.focus();
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')runCmd();});
+  const ta=document.getElementById('tarea');ta.scrollTop=ta.scrollHeight;
+}
+async function runCmd(){const c=document.getElementById('tcmd').value.trim();if(!c)return;const r=await api('/terminal/execute',{method:'POST',body:JSON.stringify({command:c})});termHistory.push({cmd:c,out:r.output,code:r.exitCode});renderTerminal();}
+
+// ===== CREDITS =====
+function renderCredits(){
+  app.innerHTML=`
+  <div class="screen">
+    <div class="hdr"><button onclick="go('dashboard')" style="background:none;border:none;color:#00ff41;font-size:20px;cursor:pointer;">←</button><span class="orb pink" style="font-size:15px;margin-left:12px;">CREDITS & COUPONS</span></div>
+    <div class="p4 space4" id="credits-body">Loading...</div>
+  </div>`;
+  loadCredits();
+}
+async function loadCredits(){
+  const [bal,ref]=await Promise.all([api('/credits/balance'),api('/credits/referral')]);
+  document.getElementById('credits-body').innerHTML=`
+    <div class="card center"><div style="font-size:44px;color:#ff00ff;text-shadow:0 0 10px rgba(255,0,255,.5);">${bal.credits}</div><div class="text-xs mt2" style="color:rgba(255,0,255,.5);">CREDITS AVAILABLE</div></div>
+    <div id="cmsg" style="display:none;" class="card center yellow"></div>
+    <div class="card space3">
+      <div class="green text-sm">REDEEM COUPON</div>
+      <div class="flex gap2"><input class="inp" id="ccode" placeholder="Coupon code" style="flex:1;"><button class="btn btn-full" onclick="redeemCoupon()" style="flex:0;">REDEEM</button></div>
+    </div>
+    <div class="card space3">
+      <div class="green text-sm">CREATE COUPON FROM CREDITS</div>
+      <div class="text-xs mb3" style="color:rgba(0,255,65,.4);">Convert your credits into a sharable coupon</div>
+      <div class="flex gap2">
+        <input class="inp" id="camount" type="number" min="1" max="${bal.credits}" value="1" style="width:80px;">
+        <button class="btn btn-pink btn-full" onclick="createUserCoupon()">CREATE COUPON</button>
+      </div>
+      <div id="cpnout" style="display:none;background:rgba(255,0,255,.08);border:1px solid rgba(255,0,255,.3);padding:12px;text-align:center;border-radius:4px;"><div class="text-xs" style="color:rgba(255,0,255,.5);">YOUR COUPON CODE</div><div class="pink" style="font-size:20px;font-weight:700;letter-spacing:.15em;margin-top:4px;" id="cpncode"></div></div>
+    </div>
+    <div class="card">
+      <div class="green text-sm mb3">REFERRAL PROGRAM</div>
+      <div style="background:rgba(0,255,65,.05);border:1px solid rgba(0,255,65,.2);padding:12px;text-align:center;border-radius:4px;margin-bottom:12px;">
+        <div class="text-xs mb2" style="color:rgba(0,255,65,.5);">YOUR REFERRAL CODE</div>
+        <div class="green" style="font-size:22px;font-weight:700;letter-spacing:.15em;">${ref.referralCode}</div>
+      </div>
+      <div class="grid2 center">
+        <div><div class="text-2xl cyan">${ref.totalReferred}</div><div class="text-xs" style="color:rgba(0,255,255,.5);">REFERRED</div></div>
+        <div><div class="text-2xl yellow">${ref.creditsEarned}</div><div class="text-xs" style="color:rgba(255,255,0,.5);">EARNED</div></div>
+      </div>
+    </div>`;
+}
+async function redeemCoupon(){const c=document.getElementById('ccode').value.trim();const msg=document.getElementById('cmsg');if(!c)return;const r=await api('/credits/redeem',{method:'POST',body:JSON.stringify({code:c})});msg.style.display='block';if(r.credits!==undefined){msg.textContent='Coupon redeemed! +credits';document.getElementById('ccode').value='';}else{msg.textContent=r.message||'Invalid';msg.style.color='#ff0000';}await loadCredits();}
+async function createUserCoupon(){const a=parseInt(document.getElementById('camount').value);if(a<1)return;const r=await api('/credits/create-coupon',{method:'POST',body:JSON.stringify({credits:a})});const out=document.getElementById('cpnout');if(r.code){out.style.display='block';document.getElementById('cpncode').textContent=r.code;await loadCredits();}else alert(r.message||'Failed');}
+
+// ===== ADMIN =====
+let adminAuth=false,adminData={},adminTab='dashboard';
+function renderAdmin(){
+  if(!adminAuth){
+    app.innerHTML=`
+    <div class="screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+      <div class="modal modal-red" style="max-width:340px;">
+        <div class="center orb red mb4" style="font-size:18px;">🔐 ADMIN ACCESS</div>
+        <div id="aerr" style="display:none;color:#ff0000;font-size:12px;text-align:center;margin-bottom:12px;"></div>
+        <input class="inp inp-red" id="apass" type="password" placeholder="Admin Password" style="margin-bottom:12px;">
+        <div class="flex gap2">
+          <button class="btn btn-red btn-full" onclick="doAdminLogin()">AUTHENTICATE</button>
+          <button class="btn btn-full" onclick="go('dashboard')">BACK</button>
+        </div>
+      </div>
+    </div>`;
+    document.getElementById('apass').addEventListener('keydown',e=>e.key==='Enter'&&doAdminLogin());
+    return;
+  }
+  const tabs=[{id:'dashboard',l:'STATS'},{id:'users',l:'USERS'},{id:'coupons',l:'COUPONS'},{id:'broadcast',l:'BROADCAST'},{id:'maintenance',l:'MAINT'},{id:'settings',l:'SITE'},{id:'notifications',l:'NOTIFS'}];
+  app.innerHTML=`
+  <div class="screen">
+    <div class="hdr" style="border-color:rgba(255,0,0,.3);">
+      <button onclick="go('dashboard')" style="background:none;border:none;color:#ff0000;font-size:20px;cursor:pointer;">←</button>
+      <span class="orb red" style="font-size:15px;margin-left:12px;">ADMIN PANEL</span>
+    </div>
+    <div style="display:flex;overflow-x:auto;border-bottom:1px solid rgba(255,0,0,.2);">
+      ${tabs.map(t=>`<button onclick="adminTab='${t.id}';renderAdmin();" style="padding:8px 12px;white-space:nowrap;background:none;border:none;border-bottom:2px solid ${adminTab===t.id?'#ff0000':'transparent'};color:${adminTab===t.id?'#ff0000':'rgba(255,0,0,.4)'};font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;">${t.l}</button>`).join('')}
+    </div>
+    <div class="p4" id="admin-body">Loading...</div>
+  </div>`;
+  loadAdminTab();
+}
+async function doAdminLogin(){const p=document.getElementById('apass').value;const r=await api('/admin/login',{method:'POST',body:JSON.stringify({password:p})});if(r.success){adminAuth=true;renderAdmin();}else{document.getElementById('aerr').style.display='block';document.getElementById('aerr').textContent='Wrong password';}}
+async function loadAdminTab(){
+  const body=document.getElementById('admin-body');
+  if(!body)return;
+  if(adminTab==='dashboard'){
+    const d=await api('/admin/dashboard');
+    body.innerHTML=`<div class="grid2 space4">${[['USERS',d.totalUsers,'green'],['PROJECTS',d.totalProjects,'cyan'],['RUNNING',d.runningProjects,'yellow'],['BANNED',d.bannedUsers,'red'],['COUPONS',d.totalCoupons,'pink'],['MAINT',d.maintenanceMode?'ON':'OFF',d.maintenanceMode?'red':'green']].map(([l,v,c])=>`<div class="card center"><div class="text-2xl ${c}">${v}</div><div class="text-xs mt2" style="color:rgba(0,255,65,.4);">${l}</div></div>`).join('')}</div>`;
+  }
+  else if(adminTab==='users'){
+    const users=await api('/admin/users');
+    body.innerHTML=`<div class="space3">${users.map(u=>`<div class="card">
+      <div class="flex justify-between items-center mb3">
+        <div><div class="green">${u.username}</div><div class="text-xs" style="color:rgba(0,255,65,.3);">Pass: ${u.password} | Credits: ${u.credits} | Projects: ${u.projectCount}</div></div>
+        <span class="${u.banned?'tag-stop':'tag-run'}">${u.banned?'BANNED':'ACTIVE'}</span>
+      </div>
+      <div class="flex gap2 flex-wrap">
+        <button class="btn ${u.banned?'':'btn-red'}" style="padding:6px 10px;font-size:11px;" onclick="adminBan('${u.id}',${u.banned})">${u.banned?'UNBAN':'BAN'}</button>
+        <button class="btn btn-cyan" style="padding:6px 10px;font-size:11px;" onclick="adminUserFiles('${u.id}','${u.username}')">FILES</button>
+        <div class="flex gap2 items-center" style="margin-left:auto;">
+          <input id="cr_${u.id}" type="number" value="1" class="inp" style="width:60px;padding:6px;">
+          <select id="ca_${u.id}" class="inp" style="padding:6px;"><option value="add">ADD</option><option value="remove">REMOVE</option><option value="set">SET</option></select>
+          <button class="btn btn-yellow" style="padding:6px 8px;font-size:11px;" onclick="adminCredits('${u.id}')">GO</button>
+        </div>
+      </div>
+    </div>`).join('')}</div>`;
+  }
+  else if(adminTab==='coupons'){
+    const coupons=await api('/admin/coupons');
+    body.innerHTML=`<div class="space4">
+      <div class="card space3"><div class="pink text-sm">CREATE COUPON</div>
+        <div class="flex gap2"><input class="inp" id="ccode" placeholder="Code" style="flex:1;"><input class="inp" id="ccred" type="number" value="1" style="width:70px;"><button class="btn btn-pink" onclick="adminCreateCoupon()">CREATE</button></div>
+      </div>
+      <div class="space2">${coupons.map(c=>`<div class="card flex justify-between items-center">
+        <div><span class="pink">${c.code}</span><span class="yellow text-xs" style="margin-left:8px;">${c.credits} credits</span><div class="text-xs" style="color:rgba(0,255,65,.3);">${c.used?'Used by: '+c.usedBy:'Available'} | By: ${c.createdBy}</div></div>
+        <button class="btn btn-red" style="padding:4px 8px;font-size:11px;" onclick="adminDelCoupon('${c.id}')">DEL</button>
+      </div>`).join('')}</div>
+    </div>`;
+  }
+  else if(adminTab==='broadcast'){
+    const bc=await api('/admin/broadcast');
+    body.innerHTML=`<div class="card space3">
+      <div class="yellow text-sm">BROADCAST MESSAGE</div>
+      <textarea id="bmsg" class="inp" style="height:80px;resize:none;">${bc.message||''}</textarea>
+      <label class="flex items-center gap2"><input type="checkbox" id="bact" ${bc.active?'checked':''}><span class="text-sm green">Active</span></label>
+      <button class="btn btn-yellow btn-full" onclick="saveBroadcast()">SAVE BROADCAST</button>
+    </div>`;
+  }
+  else if(adminTab==='maintenance'){
+    const m=await api('/admin/maintenance');
+    body.innerHTML=`<div class="card space3">
+      <div class="red text-sm">MAINTENANCE MODE</div>
+      <label class="flex items-center gap2"><input type="checkbox" id="mmode" ${m.enabled?'checked':''}><span class="text-sm green">Enable Maintenance</span></label>
+      <input class="inp" id="mmsg" placeholder="Maintenance message" value="${m.message||''}">
+      <button class="btn btn-red btn-full" onclick="saveMaintenance()">SAVE</button>
+    </div>`;
+  }
+  else if(adminTab==='settings'){
+    const s=await api('/admin/site-settings');
+    body.innerHTML=`<div class="card space3">
+      <div class="pink text-sm">SITE SETTINGS</div>
+      ${[['siteName','Site Name',s.siteName],['loginTitle','Login Title',s.loginTitle],['dashboardTitle','Dashboard Title',s.dashboardTitle],['primaryColor','Primary Color',s.primaryColor],['accentColor','Accent Color',s.accentColor],['backgroundColor','BG Color',s.backgroundColor]].map(([k,l,v])=>`<div><div class="text-xs mb2" style="color:rgba(0,255,65,.5);">${l}</div><input class="inp" id="ss_${k}" value="${v||''}"></div>`).join('')}
+      <button class="btn btn-pink btn-full" onclick="saveAdminSettings()">SAVE SETTINGS</button>
+    </div>`;
+  }
+  else if(adminTab==='notifications'){
+    const notifs=await api('/admin/notifications');
+    body.innerHTML=`<div class="space2">${notifs.length===0?'<div class="card center" style="color:rgba(0,255,65,.3);padding:24px;">No notifications</div>':notifs.map(n=>`<div class="card"><div class="green text-sm">${n.message}</div><div class="text-xs mt2" style="color:rgba(0,255,65,.3);">${n.createdAt} | ${n.type}</div></div>`).join('')}</div>`;
+  }
+}
+async function adminBan(id,banned){await api(`/admin/users/${id}/${banned?'unban':'ban'}`,{method:'POST'});await loadAdminTab();}
+async function adminCredits(id){const cr=parseInt(document.getElementById('cr_'+id).value);const ac=document.getElementById('ca_'+id).value;await api(`/admin/users/${id}/credits`,{method:'PUT',body:JSON.stringify({credits:cr,action:ac})});await loadAdminTab();}
+async function adminUserFiles(id,uname){const files=await api(`/admin/users/${id}/files`);const body=document.getElementById('admin-body');body.innerHTML=`<div><div class="flex justify-between items-center mb4"><span class="green">${uname}'s FILES</span><button class="btn" style="padding:6px 12px;font-size:11px;" onclick="loadAdminTab()">BACK</button></div><div class="space2">${files.map(f=>`<div class="card flex justify-between items-center"><div><div class="green text-sm">${f.fileName}</div><div class="text-xs" style="color:rgba(0,255,65,.3);">Project: ${f.projectName} | ${(f.fileSize/1024).toFixed(1)} KB</div></div><a href="/api/admin/users/${id}/files/${f.id}/download" class="btn btn-cyan" style="padding:6px 10px;font-size:11px;" target="_blank">DOWNLOAD</a></div>`).join('')}</div></div>`;}
+async function adminCreateCoupon(){const c=document.getElementById('ccode').value;const cr=parseInt(document.getElementById('ccred').value);await api('/admin/coupons',{method:'POST',body:JSON.stringify({code:c,credits:cr})});await loadAdminTab();}
+async function adminDelCoupon(id){await api(`/admin/coupons/${id}`,{method:'DELETE'});await loadAdminTab();}
+async function saveBroadcast(){const m=document.getElementById('bmsg').value;const a=document.getElementById('bact').checked;await api('/admin/broadcast',{method:'PUT',body:JSON.stringify({message:m,active:a})});alert('Saved!');}
+async function saveMaintenance(){const e=document.getElementById('mmode').checked;const m=document.getElementById('mmsg').value;await api('/admin/maintenance',{method:'PUT',body:JSON.stringify({enabled:e,message:m})});alert('Saved!');}
+async function saveAdminSettings(){const d={};['siteName','loginTitle','dashboardTitle','primaryColor','accentColor','backgroundColor'].forEach(k=>{const el=document.getElementById('ss_'+k);if(el)d[k]=el.value;});await api('/admin/site-settings',{method:'PUT',body:JSON.stringify(d)});alert('Saved! Reload to see changes.');}
+
+// ===== HELP =====
+let helpMsgs=[{role:'bot',text:'Hello! I am the SULAV VPS AI Assistant. Ask me anything about the platform!'}];
+function renderHelp(){
+  app.innerHTML=`
+  <div class="screen" style="display:flex;flex-direction:column;height:100vh;">
+    <div class="hdr"><button onclick="go('dashboard')" style="background:none;border:none;color:#00ff41;font-size:20px;cursor:pointer;">←</button><span class="orb cyan" style="font-size:15px;margin-left:12px;">HELP & SUPPORT</span></div>
+    <div class="chat-area" id="chat">${helpMsgs.map(m=>`<div class="${m.role==='user'?'msg-user':'msg-bot'}">${m.text}</div>`).join('')}</div>
+    <div class="flex gap2 p4" style="border-top:1px solid rgba(0,255,65,.2);">
+      <input class="inp" id="hq" placeholder="Ask anything..." style="flex:1;">
+      <button class="btn btn-cyan" onclick="askHelp()">ASK</button>
+    </div>
+  </div>`;
+  const chat=document.getElementById('chat');chat.scrollTop=chat.scrollHeight;
+  document.getElementById('hq').addEventListener('keydown',e=>e.key==='Enter'&&askHelp());
+}
+async function askHelp(){const q=document.getElementById('hq').value.trim();if(!q)return;helpMsgs.push({role:'user',text:q});renderHelp();const r=await api('/help/ask',{method:'POST',body:JSON.stringify({question:q})});helpMsgs.push({role:'bot',text:r.answer});renderHelp();}
+
+// ===== BOOT =====
+(async()=>{render();})();
+</script>
+</body>
+</html>
